@@ -1,0 +1,33 @@
+## NOTE: 
+# Passwords and other sensitive data belongs into an .env file.
+# see https://docs.docker.com/compose/environment-variables/set-environment-variables/ 
+
+version: "3.9"
+services:
+  ### Prefect Orion API
+  orion:
+    image: prefecthq/prefect:2.10-python3.11
+    entrypoint: ["prefect", "server", "start","--host", "0.0.0.0", "--port", "4200"]
+    environment:
+      # If you want to access Orion from anywhere other than the Docker host machine, you will need to change
+      # PREFECT_API_URL to match the hostname/IP used to load the Orion UI in your web browser.
+      # - PREFECT_API_URL=http://orion:4200/api
+      # This can be done separately as well e.g.:
+      - PREFECT_SERVER_API_HOST=127.0.0.1
+      - PREFECT_SERVER_API_PORT=4200
+      #
+      # - PREFECT_ORION_API_HOST=0.0.0.0
+      # - PREFECT_ORION_UI_API_URL=http://host.docker.internal:4200/api
+    ports:
+      - 4201:4200
+
+  agent:
+    image: prefecthq/prefect:2.10-python3.11
+    restart: unless-stopped
+    entrypoint: ["prefect", "agent", "start", "-q", "dev"]
+    environment:
+      - PREFECT_API_URL=http://orion:4200/api
+#       Use PREFECT_API_KEY if connecting the agent to Prefect Cloud
+#     - PREFECT_API_KEY=YOUR_API_KEY
+    depends_on:
+      - orion
